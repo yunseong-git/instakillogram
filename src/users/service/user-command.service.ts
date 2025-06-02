@@ -4,10 +4,14 @@ import { CreateUserDto } from '../dto/request/create-user.dto';
 import { SuccessCommandResponse } from 'src/common/dto/common-response';
 
 import type { User } from '@prisma/client';
+import { S3Service } from 'src/s3/s3.service';
 
 @Injectable()
 export class UserCommandService {
-    constructor(private readonly prisma: PrismaService) { }
+    constructor(
+        private readonly prisma: PrismaService,
+        private readonly s3Service: S3Service,
+    ) { }
 
     //create-Logic
     async createUser(data: CreateUserDto): Promise<User> {

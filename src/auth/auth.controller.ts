@@ -1,5 +1,5 @@
 //dto(req)
-import { RegisterDto, LoginDto, updatePasswordDto } from './dto/auth-request.dto';
+import { EmailRegisterDto, EmailLoginDto, updatePasswordDto } from './dto/auth-request.dto';
 //dto(res)
 import { TokenResponse } from './dto/auth-response.dto';
 import { SuccessCommandResponse } from 'src/common/dto/common-response';
@@ -18,14 +18,28 @@ export class AuthController {
     ) { }
 
     @Public()
-    @Post('register')
-    async register(@Body() dto: RegisterDto): Promise<SuccessCommandResponse> {
+    @Post('register/email')
+    async registerByEmail(@Body() dto: EmailRegisterDto): Promise<SuccessCommandResponse> {
         return await this.AuthService.register(dto);
     }
+    /* :todo
+        @Public()
+        @Post('register/google')
+        async registerByGoogle(@Body() dto: EmailRegisterDto): Promise<SuccessCommandResponse> {
+            return await this.AuthService.register(dto);
+        }
+    
+        
+        @Public()
+        @Post('register/kakao')
+        async registerByKakao(@Body() dto: EmailRegisterDto): Promise<SuccessCommandResponse> {
+            return await this.AuthService.register(dto);
+        }
+    */
 
     @Public()
-    @Post('login')
-    async login(@Body() dto: LoginDto, @Res({ passthrough: true }) res: Response): Promise<TokenResponse> {
+    @Post('login/email')
+    async loginByEmail(@Body() dto: EmailLoginDto, @Res({ passthrough: true }) res: Response): Promise<TokenResponse> {
         const { accessToken, refreshToken } = await this.AuthService.login(dto);
 
         /**refreshToken coockie에 저장 */

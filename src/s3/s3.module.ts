@@ -27,5 +27,8 @@ import { S3Client } from '@aws-sdk/client-s3';
       limits: { fileSize: 5 * 1024 * 1024 },
     }),
   ],
+  exports: [
+    S3Service
+  ]
 })
 export class S3Module { }

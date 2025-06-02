@@ -9,7 +9,7 @@ import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 //dto(req)
 import { CreateUserDto } from 'src/users/dto/request/create-user.dto';
-import { RegisterDto, LoginDto, updatePasswordDto } from './dto/auth-request.dto';
+import { EmailRegisterDto, EmailLoginDto, updatePasswordDto } from './dto/auth-request.dto';
 //dto(res)
 import { SuccessCommandResponse } from 'src/common/dto/common-response';
 import { AllTokenResponse, JwtPayload, TokenResponse } from './dto/auth-response.dto';
@@ -25,7 +25,31 @@ export class AuthService {
     ) { }
 
     /**회원가입*/
-    async register(dto: RegisterDto): Promise<SuccessCommandResponse> {
+    async register(dto: EmailRegisterDto): Promise<SuccessCommandResponse> {
+        if (!dto.isUniqueEmail || !dto.isUniqueNickname) throw new BadRequestException('이메일과 닉네임 중복검사가 필요합니다.')
+
+        const hashedPassword = await this.hashingPassword(dto.password);
+        const userData: CreateUserDto = { email: dto.email, nickname: dto.nickname, password: hashedPassword }
+
+        await this.userCommandService.createUser(userData);
+
+        return { command: 'register', success: true }
+    }
+
+    /**회원가입*/
+    async registerByGoogle(dto: EmailRegisterDto): Promise<SuccessCommandResponse> {
+        if (!dto.isUniqueEmail || !dto.isUniqueNickname) throw new BadRequestException('이메일과 닉네임 중복검사가 필요합니다.')
+
+        const hashedPassword = await this.hashingPassword(dto.password);
+        const userData: CreateUserDto = { email: dto.email, nickname: dto.nickname, password: hashedPassword }
+
+        await this.userCommandService.createUser(userData);
+
+        return { command: 'register', success: true }
+    }
+
+        /**회원가입*/
+    async registerByKakao(dto: EmailRegisterDto): Promise<SuccessCommandResponse> {
         if (!dto.isUniqueEmail || !dto.isUniqueNickname) throw new BadRequestException('이메일과 닉네임 중복검사가 필요합니다.')
 
         const hashedPassword = await this.hashingPassword(dto.password);
@@ -37,7 +61,7 @@ export class AuthService {
     }
 
     /**로그인 */
-    async login(dto: LoginDto): Promise<AllTokenResponse> {
+    async login(dto: EmailLoginDto): Promise<AllTokenResponse> {
         const user = await this.validateUser(dto)
 
         const payload: JwtPayload = { userId: user.id, nickname: user.nickname };
@@ -85,7 +109,7 @@ export class AuthService {
     }
 
     /**로그인 입력정보 비교*/
-    private async validateUser(dto: LoginDto): Promise<User> {
+    private async validateUser(dto: EmailLoginDto): Promise<User> {
         const { email, password } = dto;
 
         const user = await this.userQueryService.findUserByEmail(email);

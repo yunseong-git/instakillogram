@@ -8,17 +8,23 @@ import { DmModule } from './dm/dm.module';
 import { UserModule } from './users/user.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { S3Module } from './s3/s3.module';
+import { ConfigModule } from '@nestjs/config';
+import { StoryModule } from './story/story.module';
 
 @Module({
   imports: [
-    MongooseModule.forRoot(process.env.MONGO_URI!), 
+    ConfigModule.forRoot({
+      isGlobal: true,
+    }),
+    MongooseModule.forRoot(process.env.MONGO_URI!),
     RedisModule,
     DmModule,
     UserModule,
     PrismaModule,
-    S3Module
+    S3Module,
+    StoryModule
   ],
   controllers: [AppController],
-  providers: [AppService, DmGateway],
+  providers: [AppService],
 })
 export class AppModule { }

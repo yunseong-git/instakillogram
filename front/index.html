@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>자유게시판</title>
+</head>
+<body>
+  <h2>사진과 함께 글쓰기</h2>
+  <form id="post-form">
+    <input type="text" id="text" placeholder="내용을 입력하세요" required><br><br>
+    <input type="file" id="image" accept="image/*" required><br><br>
+    <button type="submit">게시하기</button>
+  </form>
+
+  <script>
+    const form = document.getElementById('post-form');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const text = document.getElementById('text').value;
+      const file = document.getElementById('image').files[0];
+
+      if (!file) {
+        alert("이미지를 선택하세요.");
+        return;
+      }
+
+      // 1. presigned URL 요청
+      const presignedRes = await fetch('/api/upload-url', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ filename: file.name })
+      });
+      const { url, key } = await presignedRes.json();
+
+      // 2. S3로 이미지 업로드
+      await fetch(url, {
+        method: 'PUT',
+        headers: { 'Content-Type': file.type },
+        body: file
+      });
+
+      // 3. 게시글 등록
+      const postRes = await fetch('/api/posts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text, imageKey: key })
+      });
+
+      if (postRes.ok) {
+        alert('게시물이 등록되었습니다!');
+        form.reset();
+      } else {
+        alert('오류가 발생했습니다.');
+      }
+    });
+  </script>
+</body>
+</html>

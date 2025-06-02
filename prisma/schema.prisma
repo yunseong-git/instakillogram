@@ -6,7 +6,6 @@
 
 generator client {
   provider = "prisma-client-js"
-  output   = "./node_modules/@prisma/client"
 }
 
 datasource db {
@@ -14,12 +13,131 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model Auth {
+  id          Int      @id @default(autoincrement())
+  provider    String   // 'email', 'google', 'kakao' 등
+  providerId  String?  // ex. 소셜 ID. email 로그인은 null
+  email       String?  @db.VarChar(191) // unique 조건 가능성을 위해 길이 제한
+  password    String?  // email 로그인 전용
+  createdAt   DateTime @default(now())
+
+  // Relations
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      Int
+
+  @@unique([provider, providerId]) // 소셜 계정 구분을 위한 복합 유니크
+}
 model User {
-  id         Int      @id @default(autoincrement())
-  email      String   @unique
-  password   String
-  nickname   String   @unique 
-  bio        String?
-  avatarUrl  String?
-  createdAt  DateTime @default(now())
+  id                Int              @id @default(autoincrement())
+  nickname          String
+  bio               String?
+  profileKey        String           @unique
+  profileVersion    Int?
+  createdAt         DateTime         @default(now())
+  auth              Auth?
+
+  // Relations
+  auths             Auth[]           // 1:N 관계
+  stories           Story[]
+  storyLikes        StoryLike[]
+  commentLikes      CommentLike[]
+  comments          Comment[]
+  sentRelations     Relationship[]   @relation("SentRelations")
+  receivedRelations Relationship[]   @relation("ReceivedRelations")
+}
+
+model Story {
+  id            String          @id @default(uuid())
+  userId        Int
+  type          StoryAccessType
+  content       String?
+  storyKey      String          @unique
+  storyVersion  Int             @default(0)
+  likeCount     Int             @default(0)
+  commentCount  In
+  t?
+  createdAt     DateTime        @default(now())
+
+  // Relations
+  user          User            @relation(fields: [userId], references: [id])
+  tags          Tag[]           @relation("StoryTags")
+  comments      Comment[]
+  likes         StoryLike[]
+}
+
+model Tag {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  count     Int      @default(0)
+  createdAt DateTime @default(now())
+
+  // Relations
+  stories   Story[]  @relation("StoryTags")
+}
+
+model StoryLike {
+  userId    Int
+  storyId   String
+
+  // Relations
+  user      User    @relation(fields: [userId], references: [id])
+  story     Story   @relation(fields: [storyId], references: [id])
+
+  @@unique([userId, storyId])
+}
+
+model Comment {
+  id            String      @id @default(uuid())
+  parentId      String?
+  userId        Int
+  userTagId     Int?
+  storyId       String
+  content       String
+  likeCount     Int?        @default(0)
+  commentCount  Int         @default(0)
+  createdAt     DateTime    @default(now())
+
+  // Relations
+  parent        Comment?    @relation("CommentReplies", fields: [parentId], references: [id])
+  replies       Comment[]   @relation("CommentReplies")
+  user          User        @relation(fields: [userId], references: [id])
+  story         Story       @relation(fields: [storyId], references: [id])
+  likes         CommentLike[]
+}
+
+model CommentLike {
+  userId     Int
+  commentId  String
+
+  // Relations
+  user       User     @relation(fields: [userId], references: [id])
+  comment    Comment  @relation(fields: [commentId], references: [id])
+
+  @@unique([userId, commentId])
+}
+
+model Relationship {
+  id           Int      @id @default(autoincrement())
+  fromUserId   Int
+  toUserId     Int
+  type         RelationshipType
+  createdAt    DateTime @default(now())
+
+  // Relations
+  fromUser     User     @relation("SentRelations", fields: [fromUserId], references: [id])
+  toUser       User     @relation("ReceivedRelations", fields: [toUserId], references: [id])
+
+  @@unique([fromUserId, toUserId])
+}
+
+enum RelationshipType {
+  FOLLOWING
+  BLOCKED
+  FRIEND
+}
+
+enum StoryAccessType {
+  PUBLIC   // BLOCKED 제외 전체 공개
+  PRIVATE  // FRIEND만
+  SECRET   // 본인만
 }

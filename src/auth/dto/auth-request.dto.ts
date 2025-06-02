@@ -9,7 +9,7 @@ export class updatePasswordDto {
   newPassword!: string;
 }
 
-export class RegisterDto {
+export class EmailRegisterDto {
   @IsEmail({}, { message: '올바른 이메일 형식이 아닙니다.' })
   email!: string;
 
@@ -24,7 +24,7 @@ export class RegisterDto {
   isUniqueNickname: boolean;
 }
 
-export class LoginDto {
+export class EmailLoginDto {
   @IsEmail({}, { message: '올바른 이메일 형식이 아닙니다.' })
   email!: string;
 
